@@ -1,0 +1,91 @@
+{
+    "server": {
+        "name": "finance-mcp",
+        "version": "1.0.0",
+        "description": "Real-Time Financial Data MCP Integration System"
+    },
+    "tools": [
+        {
+            "name": "quote.latest",
+            "description": "Get the latest price quote for a financial instrument",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "The ticker symbol (e.g., AAPL, BTCUSDT)"
+                    },
+                    "exchange": {
+                        "type": "string",
+                        "description": "Optional exchange identifier (e.g., NASDAQ, BINANCE)",
+                        "default": null
+                    },
+                    "maxAgeSec": {
+                        "type": "integer",
+                        "description": "Maximum age of cached data in seconds",
+                        "default": 60
+                    }
+                },
+                "required": ["symbol"]
+            },
+            "outputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbol": {"type": "string"},
+                    "price": {"type": "number"},
+                    "timestamp": {"type": "string"},
+                    "data_source": {"type": "string"},
+                    "cache_hit": {"type": "boolean"},
+                    "latency_ms": {"type": "number"}
+                }
+            }
+        },
+        {
+            "name": "quote.stream",
+            "description": "Subscribe to real-time price stream for a financial instrument",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "The ticker symbol (e.g., BTCUSDT)"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": ["trades", "quotes"],
+                        "description": "Type of stream data",
+                        "default": "trades"
+                    }
+                },
+                "required": ["symbol"]
+            },
+            "outputSchema": {
+                "type": "object",
+                "properties": {
+                    "subscription_id": {"type": "string"},
+                    "status": {"type": "string"}
+                }
+            }
+        }
+    ],
+    "connectors": [
+        {
+            "name": "alpha_vantage",
+            "type": "rest",
+            "description": "Alpha Vantage REST API connector for stock data",
+            "rate_limit": "5 calls/minute"
+        },
+        {
+            "name": "finnhub",
+            "type": "rest",
+            "description": "Finnhub REST API connector for stock quotes",
+            "rate_limit": "60 calls/minute"
+        },
+        {
+            "name": "binance",
+            "type": "websocket",
+            "description": "Binance WebSocket connector for real-time crypto data",
+            "rate_limit": "unlimited"
+        }
+    ]
+}

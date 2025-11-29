@@ -1,0 +1,43 @@
+# Core
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# HTTP Client
+httpx==0.25.2
+aiohttp==3.9.1
+
+# WebSocket
+websockets==12.0
+
+# Redis
+redis==5.0.1
+
+# Qdrant Vector DB
+qdrant-client==1.7.0
+
+# Neo4j Graph DB
+neo4j==5.15.0
+
+# Sentence Transformers for embeddings (pinned compatible versions)
+sentence-transformers==2.7.0
+torch==2.2.0
+transformers==4.40.0
+
+# LangChain
+langchain==0.1.20
+langchain-core==0.1.52
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Logging and utilities
+structlog==23.2.0
+tenacity==8.2.3
+
+# OpenAPI
+pyyaml==6.0.1
