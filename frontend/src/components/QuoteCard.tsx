@@ -77,7 +77,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              placeholder="Enter symbol (e.g., AAPL, BTCUSDT)"
+              placeholder="Enter stock or crypto symbol"
               className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>

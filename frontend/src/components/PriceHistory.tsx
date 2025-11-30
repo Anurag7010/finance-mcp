@@ -18,10 +18,18 @@ const PriceHistory: React.FC<PriceHistoryProps> = ({ quotes }) => {
   const [chartData, setChartData] = useState<
     Array<{ time: string; price: number; symbol: string }>
   >([]);
+  const [currentSymbol, setCurrentSymbol] = useState<string>("");
 
   useEffect(() => {
     if (quotes.length > 0) {
-      const data = quotes.map((quote) => ({
+      // Get the most recent symbol
+      const latestSymbol = quotes[quotes.length - 1].symbol;
+      setCurrentSymbol(latestSymbol);
+
+      // Filter quotes to only show the current symbol
+      const filteredQuotes = quotes.filter((q) => q.symbol === latestSymbol);
+
+      const data = filteredQuotes.map((quote) => ({
         time: new Date(quote.timestamp).toLocaleTimeString(),
         price: quote.price,
         symbol: quote.symbol,
@@ -45,7 +53,9 @@ const PriceHistory: React.FC<PriceHistoryProps> = ({ quotes }) => {
 
   return (
     <div className="bg-slate-800 rounded-xl shadow-2xl p-8 border border-slate-700">
-      <h3 className="text-xl font-bold text-white mb-6">Price History</h3>
+      <h3 className="text-xl font-bold text-white mb-6">
+        Price History {currentSymbol && `- ${currentSymbol}`}
+      </h3>
 
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -85,26 +95,34 @@ const PriceHistory: React.FC<PriceHistoryProps> = ({ quotes }) => {
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
           <p className="text-slate-400 text-xs mb-1">Total Queries</p>
-          <p className="text-white text-lg font-semibold">{quotes.length}</p>
+          <p className="text-white text-lg font-semibold">{chartData.length}</p>
         </div>
         <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
-          <p className="text-slate-400 text-xs mb-1">Unique Symbols</p>
+          <p className="text-slate-400 text-xs mb-1">Current Symbol</p>
           <p className="text-white text-lg font-semibold">
-            {new Set(quotes.map((q) => q.symbol)).size}
+            {currentSymbol || "N/A"}
           </p>
         </div>
         <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
           <p className="text-slate-400 text-xs mb-1">Cache Hits</p>
           <p className="text-green-400 text-lg font-semibold">
-            {quotes.filter((q) => q.cache_hit).length}
+            {
+              quotes.filter((q) => q.symbol === currentSymbol && q.cache_hit)
+                .length
+            }
           </p>
         </div>
         <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700">
           <p className="text-slate-400 text-xs mb-1">Avg Latency</p>
           <p className="text-blue-400 text-lg font-semibold">
-            {(
-              quotes.reduce((sum, q) => sum + q.latency_ms, 0) / quotes.length
-            ).toFixed(0)}
+            {chartData.length > 0
+              ? (
+                  quotes
+                    .filter((q) => q.symbol === currentSymbol)
+                    .reduce((sum, q) => sum + q.latency_ms, 0) /
+                  chartData.length
+                ).toFixed(0)
+              : 0}
             ms
           </p>
         </div>
