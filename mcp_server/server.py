@@ -7,6 +7,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -74,6 +75,34 @@ app = FastAPI(
     description="Real-Time Financial Data MCP Integration System",
     lifespan=lifespan
 )
+
+# Add CORS middleware to allow frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=False,  # Must be False when allow_origins is "*"
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+
+# ==================== CORS PREFLIGHT HANDLER ====================
+# Explicit handler for CORS preflight requests
+from fastapi import Response
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle CORS preflight requests for all paths"""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 
 # ==================== MCP ENDPOINTS ====================
