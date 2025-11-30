@@ -106,7 +106,7 @@ async def subscribe_stream(symbol: str, channel: str = "trades"):
             "agent_id": "demo_agent"
         }
         
-        print(f"\n🔴 Subscribing to {symbol} {channel} stream...")
+        print(f"\n Subscribing to {symbol} {channel} stream...")
         
         response = await client.post(f"{MCP_BASE_URL}/subscribe", json=payload)
         result = response.json()
@@ -220,7 +220,7 @@ async def demo_flow():
     print("\n" + "=" * 60)
     print("  Demo Complete!")
     print("=" * 60)
-    print("\n📌 Key Observations:")
+    print("\nKey Observations:")
     print("  1. MCP Server normalizes all connector responses")
     print("  2. Redis cache reduces latency for repeated queries")
     print("  3. Binance WebSocket provides real-time crypto data")
