@@ -91,15 +91,6 @@ const StatusBar: React.FC = () => {
           </span>
         </div>
 
-        {/* Active Subscriptions */}
-        <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-blue-400" />
-          <span className="text-sm text-slate-300">
-            Subscriptions:{" "}
-            <span className="text-blue-400">{status.subscriptions}</span>
-          </span>
-        </div>
-
         {/* Indicator Dot */}
         <div className="ml-auto flex items-center gap-2">
           <div
