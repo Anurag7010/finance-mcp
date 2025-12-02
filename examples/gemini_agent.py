@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
 Gemini + Finance MCP Server Integration
-100% Free - Uses Google's generous free tier
 
-Get your free API key: https://aistudio.google.com/apikey
 """
 import os
 import httpx
@@ -21,9 +19,8 @@ MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 if not GEMINI_API_KEY:
-    print("❌ Error: GEMINI_API_KEY not set in .env file")
-    print("   Get your free key at: https://aistudio.google.com/apikey")
-    print("   Add to .env: GEMINI_API_KEY=your_key_here")
+    print("Error: GEMINI_API_KEY not set in .env")
+    
     exit(1)
 
 # Configure Gemini
@@ -32,7 +29,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 # ============ MCP TOOL FUNCTIONS ============
 async def call_mcp_quote(symbol: str, max_age_sec: int = 60) -> Dict[str, Any]:
-    """Fetch quote from MCP server"""
+    """Fetch quote from MCP"""
     async with httpx.AsyncClient(timeout=30.0) as client:
         payload = {
             "tool_name": "quote.latest",
@@ -166,7 +163,7 @@ tools = [
 def chat_with_gemini(user_message: str, chat_history: Optional[list] = None) -> str:
     """
     Send message to Gemini with MCP tool access
-    Returns the assistant's response
+    and return the response text.
     """
     # Initialize model with tools
     model = genai.GenerativeModel(
@@ -199,7 +196,7 @@ Always use the tools to get real data - never make up prices."""
     # Send user message
     response = chat.send_message(user_message)
     
-    # Handle function calls (supports multiple parallel calls)
+    # Handle function calls 
     while response.candidates[0].content.parts:
         # Collect ALL function calls from the response
         function_calls = []
@@ -221,7 +218,7 @@ Always use the tools to get real data - never make up prices."""
             
             # Execute the function
             result = execute_tool(func_name, func_args)
-            print(f"📊 Result:\n{result}\n")
+            print(f" Result:\n{result}\n")
             
             function_responses.append(
                 genai.protos.Part(
@@ -248,33 +245,31 @@ Always use the tools to get real data - never make up prices."""
 
 # ============ INTERACTIVE CLI ============
 def interactive_mode():
-    """Run interactive chat session"""
+    """Interactive chat"""
     print("=" * 60)
-    print("  💎 Gemini + Finance MCP Agent")
-    print("  100% Free - Real-time Market Data")
-    print("=" * 60)
+    print("  Gemini + Finance MCP Agent")
+    
     print("\nExamples:")
     print("  • What's the price of Apple stock?")
     print("  • How much is Bitcoin worth?")
     print("  • Compare Tesla and NVIDIA prices")
-    print("  • Get me Ethereum's current value")
-    print("\nType 'quit' or 'exit' to stop.\n")
+    print("\n'exit' to stop.\n")
     print("-" * 60)
     
     chat_history = []
     
     while True:
         try:
-            user_input = input("\n💬 You: ").strip()
+            user_input = input("\nYou: ").strip()
             
             if not user_input:
                 continue
             
             if user_input.lower() in ['quit', 'exit', 'q']:
-                print("\n👋 Goodbye!")
+                print("\nGoodbye!")
                 break
             
-            print("\n🤖 Gemini: ", end="")
+            print("\nGemini: ", end="")
             
             response = chat_with_gemini(user_input, chat_history)
             print(response)
@@ -284,17 +279,17 @@ def interactive_mode():
             chat_history.append({"role": "model", "parts": [response]})
             
         except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
+            print("\n\nGoodbye!")
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}")
+            print(f"\nError: {e}")
 
 
 # ============ DEMO MODE ============
 def demo_mode():
-    """Run demo with sample queries"""
+    
     print("=" * 60)
-    print("  💎 Gemini + Finance MCP Demo")
+    print("  Gemini + Finance MCP Demo")
     print("=" * 60)
     
     demo_queries = [
@@ -306,14 +301,14 @@ def demo_mode():
     
     for query in demo_queries:
         print(f"\n{'='*60}")
-        print(f"💬 User: {query}")
+        print(f"User: {query}")
         print("-" * 60)
         
         try:
             response = chat_with_gemini(query)
-            print(f"\n🤖 Gemini: {response}")
+            print(f"\n  Gemini: {response}")
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"\nError: {e}")
         
         print()
 
@@ -331,12 +326,12 @@ if __name__ == "__main__":
             except:
                 return False
     
-    print("🔍 Checking MCP server...")
+    print("Checking MCP server...")
     if not asyncio.run(check_mcp()):
-        print("❌ MCP server not running!")
-        print("   Start it with: cd infra && docker-compose up -d")
+        print("MCP server not running")
+        print("   Start with: cd infra && docker-compose up -d")
         exit(1)
-    print("✅ MCP server is healthy\n")
+    print("MCP server is healthy\n")
     
     # Run mode based on argument
     if len(sys.argv) > 1 and sys.argv[1] == "--demo":
