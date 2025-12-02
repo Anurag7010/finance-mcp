@@ -14,8 +14,12 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Exchange rate: 1 USD = 89.94 INR
+USD_TO_INR = 89.94
+
 # ============ CONFIGURATION ============
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
+MCP_API_KEY = os.getenv("MCP_API_KEY", "dev_key_change_in_production")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 if not GEMINI_API_KEY:
@@ -30,6 +34,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 # ============ MCP TOOL FUNCTIONS ============
 async def call_mcp_quote(symbol: str, max_age_sec: int = 60) -> Dict[str, Any]:
     """Fetch quote from MCP"""
+    headers = {"X-API-Key": MCP_API_KEY}
     async with httpx.AsyncClient(timeout=30.0) as client:
         payload = {
             "tool_name": "quote.latest",
@@ -38,7 +43,7 @@ async def call_mcp_quote(symbol: str, max_age_sec: int = 60) -> Dict[str, Any]:
             "query_text": f"Get quote for {symbol}"
         }
         try:
-            response = await client.post(f"{MCP_BASE_URL}/invoke", json=payload)
+            response = await client.post(f"{MCP_BASE_URL}/invoke", json=payload, headers=headers)
             return response.json()
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -46,6 +51,7 @@ async def call_mcp_quote(symbol: str, max_age_sec: int = 60) -> Dict[str, Any]:
 
 async def call_mcp_subscribe(symbol: str, channel: str = "trades") -> Dict[str, Any]:
     """Subscribe to real-time stream"""
+    headers = {"X-API-Key": MCP_API_KEY}
     async with httpx.AsyncClient(timeout=30.0) as client:
         payload = {
             "symbol": symbol.upper(),
@@ -53,7 +59,7 @@ async def call_mcp_subscribe(symbol: str, channel: str = "trades") -> Dict[str, 
             "agent_id": "gemini_agent"
         }
         try:
-            response = await client.post(f"{MCP_BASE_URL}/subscribe", json=payload)
+            response = await client.post(f"{MCP_BASE_URL}/subscribe", json=payload, headers=headers)
             return response.json()
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -73,25 +79,28 @@ def execute_tool(function_name: str, function_args: Dict[str, Any]) -> str:
         if result.get("success"):
             data = result["data"]
             price = data.get("price", 0)
+            price_inr = price * USD_TO_INR
             source = data.get("data_source", "unknown")
             cache_hit = "cached" if data.get("cache_hit") else "fresh"
             
             response = f"Symbol: {data.get('symbol', symbol)}\n"
-            response += f"Price: ${price:,.2f}\n"
+            response += f"Price: ₹{price_inr:,.2f}\n"
             response += f"Source: {source} ({cache_hit})\n"
             
             if data.get("open"):
-                response += f"Open: ${data['open']:,.2f}\n"
+                response += f"Open: ₹{(data['open'] * USD_TO_INR):,.2f}\n"
             if data.get("high"):
-                response += f"High: ${data['high']:,.2f}\n"
+                response += f"High: ₹{(data['high'] * USD_TO_INR):,.2f}\n"
             if data.get("low"):
-                response += f"Low: ${data['low']:,.2f}\n"
+                response += f"Low: ₹{(data['low'] * USD_TO_INR):,.2f}\n"
             if data.get("previous_close"):
                 prev = data["previous_close"]
+                prev_inr = prev * USD_TO_INR
                 change = price - prev
+                change_inr = change * USD_TO_INR
                 pct = (change / prev) * 100 if prev else 0
-                response += f"Previous Close: ${prev:,.2f}\n"
-                response += f"Change: ${change:+,.2f} ({pct:+.2f}%)\n"
+                response += f"Previous Close: ₹{prev_inr:,.2f}\n"
+                response += f"Change: ₹{change_inr:+,.2f} ({pct:+.2f}%)\n"
             if data.get("volume"):
                 response += f"Volume: {data['volume']:,.0f}\n"
             
@@ -175,6 +184,7 @@ When users ask about stock prices, crypto values, or market data:
 1. Use the get_stock_quote tool to fetch current prices
 2. Provide clear, concise analysis of the data
 3. Include relevant metrics like price change, volume when available
+4. Return the prices in Indian Rupees (₹) format  1$ = ₹89.94rs 
 
 Common symbol mappings:
 - Apple = AAPL
@@ -213,7 +223,7 @@ Always use the tools to get real data - never make up prices."""
             func_name = function_call.name
             func_args = dict(function_call.args) if function_call.args else {}
             
-            print(f"\n🔧 Gemini calling: {func_name}")
+            print(f"\n Gemini calling: {func_name}")
             print(f"   Arguments: {func_args}")
             
             # Execute the function

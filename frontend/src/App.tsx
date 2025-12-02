@@ -1,12 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TrendingUp, Github } from "lucide-react";
 import QuoteCard from "./components/QuoteCard";
 import StatusBar from "./components/StatusBar";
 import PriceHistory from "./components/PriceHistory";
 import { QuoteData } from "./services/api";
 
+const STORAGE_KEY = "finance_mcp_quote_history";
+
 function App() {
-  const [quoteHistory, setQuoteHistory] = useState<QuoteData[]>([]);
+  // Load history from localStorage on mount
+  const [quoteHistory, setQuoteHistory] = useState<QuoteData[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteHistory));
+    } catch (error) {
+      console.error("Failed to save history:", error);
+    }
+  }, [quoteHistory]);
 
   const handleQuoteUpdate = (quote: QuoteData) => {
     setQuoteHistory((prev) => [...prev, quote].slice(-20)); // Keep last 20 queries

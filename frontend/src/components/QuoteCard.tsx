@@ -1,16 +1,21 @@
-import React, { useState } from "react";
-import { Search, TrendingUp, TrendingDown } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Search, TrendingUp, TrendingDown, Play, Pause } from "lucide-react";
 import { mcpApi, QuoteData } from "../services/api";
 
 interface QuoteCardProps {
   onQuoteUpdate?: (quote: QuoteData) => void;
 }
 
+// Exchange rate: 1 USD = 89.94 INR
+const USD_TO_INR = 89.94;
+
 const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
   const [symbol, setSymbol] = useState("");
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveMode, setLiveMode] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const popularSymbols = [
     { symbol: "AAPL", name: "Apple" },
@@ -66,6 +71,41 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
 
   const priceChange = getPriceChange();
 
+  // Live Mode: Auto-refresh every 5 seconds
+  useEffect(() => {
+    if (liveMode && symbol) {
+      intervalRef.current = setInterval(() => {
+        fetchQuote(symbol);
+      }, 5000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [liveMode, symbol]);
+
+  const toggleLiveMode = () => {
+    setLiveMode(!liveMode);
+  };
+
+  // Calculate day range position (0-100%)
+  const getDayRangePosition = () => {
+    if (!quote || !quote.high || !quote.low) return null;
+    const range = quote.high - quote.low;
+    if (range === 0) return 50; // If no range, show in middle
+    const position = ((quote.price - quote.low) / range) * 100;
+    return Math.max(0, Math.min(100, position));
+  };
+
+  const rangePosition = getDayRangePosition();
+
   return (
     <div className="bg-slate-800 rounded-xl shadow-2xl p-8 border border-slate-700">
       {/* Search Form */}
@@ -98,6 +138,29 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
               </>
             )}
           </button>
+          {quote && (
+            <button
+              type="button"
+              onClick={toggleLiveMode}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 ${
+                liveMode
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-slate-700 hover:bg-slate-600 text-slate-200"
+              }`}
+            >
+              {liveMode ? (
+                <>
+                  <Pause className="w-5 h-5" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" />
+                  Start Live
+                </>
+              )}
+            </button>
+          )}
         </div>
       </form>
 
@@ -120,7 +183,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-lg">
-          <p className="text-red-300 text-sm">❌ {error}</p>
+          <p className="text-red-300 text-sm"> {error}</p>
         </div>
       )}
 
@@ -135,14 +198,13 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
                   {quote.symbol}
                 </h2>
                 <p className="text-slate-400 text-sm">
-                  {quote.data_source} •{" "}
-                  {quote.cache_hit ? "⚡ Cached" : "🔄 Fresh"}
+                  {quote.data_source} • {quote.cache_hit ? " Cached" : " Fresh"}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-4xl font-bold text-white">
-                  $
-                  {quote.price.toLocaleString("en-US", {
+                  ₹
+                  {(quote.price * USD_TO_INR).toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -162,7 +224,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
                     )}
                     <span className="text-lg font-semibold">
                       {priceChange.change >= 0 ? "+" : ""}
-                      {priceChange.change.toFixed(2)} (
+                      {(priceChange.change * USD_TO_INR).toFixed(2)} (
                       {priceChange.changePercent >= 0 ? "+" : ""}
                       {priceChange.changePercent.toFixed(2)}%)
                     </span>
@@ -172,13 +234,48 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
             </div>
           </div>
 
+          {/* Day Range Visualizer */}
+          {quote.high && quote.low && rangePosition !== null && (
+            <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700 mt-4">
+              <p className="text-slate-400 text-xs mb-3">Day Range</p>
+              <div className="relative">
+                {/* Progress bar background */}
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  {/* Filled portion */}
+                  <div
+                    className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-500"
+                    style={{ width: `${rangePosition}%` }}
+                  />
+                </div>
+                {/* Current price indicator */}
+                <div
+                  className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 transition-all duration-500"
+                  style={{ left: `${rangePosition}%` }}
+                >
+                  <div className="w-4 h-4 bg-white rounded-full border-2 border-slate-800 shadow-lg" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 text-xs">
+                <span className="text-red-400">
+                  Low: ₹{(quote.low * USD_TO_INR).toFixed(2)}
+                </span>
+                <span className="text-slate-400">
+                  Current: ₹{(quote.price * USD_TO_INR).toFixed(2)}
+                </span>
+                <span className="text-green-400">
+                  High: ₹{(quote.high * USD_TO_INR).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {quote.open && (
               <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
                 <p className="text-slate-400 text-xs mb-1">Open</p>
                 <p className="text-white text-lg font-semibold">
-                  ${quote.open.toFixed(2)}
+                  ₹{(quote.open * USD_TO_INR).toFixed(2)}
                 </p>
               </div>
             )}
@@ -186,7 +283,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
               <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
                 <p className="text-slate-400 text-xs mb-1">High</p>
                 <p className="text-green-400 text-lg font-semibold">
-                  ${quote.high.toFixed(2)}
+                  ₹{(quote.high * USD_TO_INR).toFixed(2)}
                 </p>
               </div>
             )}
@@ -194,7 +291,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ onQuoteUpdate }) => {
               <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
                 <p className="text-slate-400 text-xs mb-1">Low</p>
                 <p className="text-red-400 text-lg font-semibold">
-                  ${quote.low.toFixed(2)}
+                  ₹{(quote.low * USD_TO_INR).toFixed(2)}
                 </p>
               </div>
             )}

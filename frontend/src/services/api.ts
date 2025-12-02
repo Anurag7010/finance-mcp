@@ -1,6 +1,10 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_KEY = process.env.REACT_APP_API_KEY || 'dev_key_change_in_production';
+
+// Configure axios to include API key in all requests
+axios.defaults.headers.common['X-API-Key'] = API_KEY;
 
 export interface QuoteData {
   symbol: string;
