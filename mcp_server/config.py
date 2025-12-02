@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
+    # Security
+    mcp_api_key: str = "dev_key_change_in_production"  # Change this in .env for production
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

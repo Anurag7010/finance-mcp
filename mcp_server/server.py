@@ -6,9 +6,10 @@ import json
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 
 from mcp_server.config import get_settings
@@ -30,6 +31,20 @@ logger = get_logger(__name__)
 
 # Load capabilities
 CAPABILITIES_PATH = Path(__file__).parent / "capabilities.json"
+
+# API Key Security
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def get_api_key(api_key: str = Security(api_key_header)):
+    """Validate API key from request header"""
+    settings = get_settings()
+    if api_key == settings.mcp_api_key:
+        return api_key
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Invalid or missing API key"
+    )
 
 
 @asynccontextmanager
@@ -89,8 +104,6 @@ app.add_middleware(
 
 # ==================== CORS PREFLIGHT HANDLER ====================
 # Explicit handler for CORS preflight requests
-from fastapi import Response
-
 @app.options("/{path:path}")
 async def options_handler(path: str):
     """Handle CORS preflight requests for all paths"""
@@ -145,7 +158,7 @@ async def get_capabilities():
         raise HTTPException(status_code=500, detail="Invalid capabilities file")
 
 
-@app.post("/invoke")
+@app.post("/invoke", dependencies=[Security(get_api_key)])
 async def invoke_tool(request: ToolInvocation):
     """
     Execute an MCP tool
@@ -153,6 +166,8 @@ async def invoke_tool(request: ToolInvocation):
     Supported tools:
     - quote.latest: Get latest price quote
     - quote.stream: Subscribe to real-time stream
+    
+    Requires X-API-Key header
     """
     logger.info(
         "invoke_request",
@@ -205,10 +220,12 @@ async def invoke_tool(request: ToolInvocation):
         )
 
 
-@app.post("/subscribe")
+@app.post("/subscribe", dependencies=[Security(get_api_key)])
 async def subscribe(request: SubscriptionRequest):
     """
     Subscribe to a real-time stream
+    
+    Requires X-API-Key header
     """
     logger.info(
         "subscribe_request",
@@ -243,10 +260,12 @@ class UnsubscribeRequest(BaseModel):
     subscription_id: str
 
 
-@app.post("/unsubscribe")
+@app.post("/unsubscribe", dependencies=[Security(get_api_key)])
 async def unsubscribe(request: UnsubscribeRequest):
     """
     Unsubscribe from a stream
+    
+    Requires X-API-Key header
     """
     logger.info("unsubscribe_request", subscription_id=request.subscription_id)
     
