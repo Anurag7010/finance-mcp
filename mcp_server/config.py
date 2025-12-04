@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # Security
     mcp_api_key: str = "dev_key_change_in_production"  # Change this in .env for production
 
+    # AI/LLM Configuration
+    gemini_api_key: str = "AIzaSyCIdGK4u6pKyjYb1uYFuJ7XvvFUHY51qF8" 
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

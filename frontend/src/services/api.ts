@@ -55,6 +55,12 @@ export interface HealthStatus {
   active_subscriptions: number;
 }
 
+export interface ChatResponse {
+  response: string;
+  success: boolean;
+  error: string | null;
+}
+
 class MCPApi {
   private baseUrl: string;
 
@@ -97,6 +103,13 @@ class MCPApi {
   async unsubscribe(subscriptionId: string) {
     const response = await axios.post(`${this.baseUrl}/unsubscribe`, {
       subscription_id: subscriptionId,
+    });
+    return response.data;
+  }
+
+  async chat(message: string): Promise<ChatResponse> {
+    const response = await axios.post<ChatResponse>(`${this.baseUrl}/chat`, {
+      message,
     });
     return response.data;
   }

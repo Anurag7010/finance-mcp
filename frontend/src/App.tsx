@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, Github } from "lucide-react";
+import { TrendingUp, Github, Search, MessageSquare } from "lucide-react";
 import QuoteCard from "./components/QuoteCard";
 import StatusBar from "./components/StatusBar";
 import PriceHistory from "./components/PriceHistory";
+import ChatInterface from "./components/ChatInterface";
 import { QuoteData } from "./services/api";
 
 const STORAGE_KEY = "finance_mcp_quote_history";
 
+type AppMode = "search" | "agent";
+
 function App() {
+  const [mode, setMode] = useState<AppMode>("search");
+
   // Load history from localStorage on mount
   const [quoteHistory, setQuoteHistory] = useState<QuoteData[]>(() => {
     try {
@@ -59,19 +64,55 @@ function App() {
         </div>
       </header>
 
+      {/* Mode Switcher */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="inline-flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+          <button
+            onClick={() => setMode("search")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all duration-200 ${
+              mode === "search"
+                ? "bg-primary-600 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            <span>Search</span>
+          </button>
+          <button
+            onClick={() => setMode("agent")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-medium transition-all duration-200 ${
+              mode === "agent"
+                ? "bg-primary-600 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>AI Agent</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Status Bar */}
           <StatusBar />
 
-          {/* Quote Search */}
-          <QuoteCard onQuoteUpdate={handleQuoteUpdate} />
+          {/* Conditional Rendering based on mode */}
+          {mode === "search" ? (
+            <>
+              {/* Quote Search */}
+              <QuoteCard onQuoteUpdate={handleQuoteUpdate} />
 
-          {/* Price History */}
-          <PriceHistory quotes={quoteHistory} />
-
-          {/* Info Cards */}
+              {/* Price History */}
+              <PriceHistory quotes={quoteHistory} />
+            </>
+          ) : (
+            <>
+              {/* AI Chat Interface */}
+              <ChatInterface />
+            </>
+          )}
         </div>
       </main>
 

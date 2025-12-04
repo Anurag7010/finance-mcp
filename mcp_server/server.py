@@ -25,6 +25,12 @@ from cache.redis_client import get_redis_client
 from cache.qdrant_client import get_semantic_cache
 from graph.lineage_writer import get_lineage_writer
 
+try:
+    from mcp_server.chat_agent import get_chat_agent
+    GEMINI_AVAILABLE = True
+except Exception:
+    GEMINI_AVAILABLE = False
+
 # Setup logging
 setup_logging()
 logger = get_logger(__name__)
@@ -285,6 +291,69 @@ async def unsubscribe(request: UnsubscribeRequest):
         return JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
+        )
+
+
+# ==================== AI CHAT ENDPOINT ====================
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    response: str
+    success: bool
+    error: Optional[str] = None
+
+
+@app.post("/chat", dependencies=[Security(get_api_key)])
+async def chat(request: ChatRequest):
+    """
+    Chat with Gemini AI agent
+    
+    The agent has access to real-time financial data through MCP tools.
+    Requires X-API-Key header
+    """
+    if not GEMINI_AVAILABLE:
+        return JSONResponse(
+            status_code=503,
+            content=ChatResponse(
+                response="",
+                success=False,
+                error="Gemini chat agent not available. Check GEMINI_API_KEY configuration."
+            ).model_dump()
+        )
+    
+    try:
+        agent = get_chat_agent()
+        response_text = await agent.chat(request.message)
+        
+        return JSONResponse(
+            content=ChatResponse(
+                response=response_text,
+                success=True
+            ).model_dump()
+        )
+    
+    except Exception as e:
+        logger.error(f"Chat endpoint error: {e}")
+        error_msg = str(e)
+        
+        # Parse common Gemini errors for user-friendly messages
+        if "429" in error_msg or "quota" in error_msg.lower():
+            error_msg = "The Gemini API quota has been exceeded. Please try again in a few moments or check your API billing settings."
+        elif "401" in error_msg or "authentication" in error_msg.lower():
+            error_msg = "Invalid Gemini API key. Please check your configuration."
+        elif "GEMINI_API_KEY" in error_msg:
+            error_msg = "Gemini API key not configured. Please add it to your environment settings."
+        
+        return JSONResponse(
+            status_code=200,  # Return 200 so frontend can display error message
+            content=ChatResponse(
+                response="",
+                success=False,
+                error=error_msg
+            ).model_dump()
         )
 
 

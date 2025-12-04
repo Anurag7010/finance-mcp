@@ -1,15 +1,21 @@
 # Finance MCP
 
-Finance MCP is a modular, production-grade platform for real-time financial data retrieval, caching, and AI agent integration. It features a FastAPI backend, React frontend, and supports both direct search and conversational (Gemini LLM) modes.
+Finance MCP is a modular, production-grade platform for real-time financial data retrieval, caching, and AI agent integration. It features a FastAPI backend with dual-mode React frontend supporting both direct search and conversational AI (Gemini LLM) modes.
 
 ## Features
 
+- **Dual-Mode Interface**: Switch between Search mode and AI Agent mode seamlessly
+- **Search Mode**: Direct stock/crypto quote lookup with live auto-refresh and price history
+- **AI Agent Mode**: Natural language chat interface powered by Google Gemini for conversational market queries
 - Real-time and historical price data for stocks and crypto (Alpha Vantage, Finnhub, Binance)
+- **Indian Market Support**: Display prices in INR (₹) with automatic USD conversion (1$ = ₹89.94)
 - Redis hot cache and Qdrant semantic cache for low-latency and intelligent response
 - Neo4j graph lineage for data provenance
 - REST API and WebSocket support
-- Modern React + TypeScript + Tailwind frontend
-- Gemini LLM agent integration (Google AI Studio, free tier)
+- Modern React + TypeScript + Tailwind frontend with premium Apple-level design
+- Live Mode with 5-second auto-refresh for real-time tracking
+- Day Range Visualizer showing price position within trading range
+- LocalStorage persistence for quote history
 
 ## Architecture
 
@@ -82,6 +88,19 @@ npm start
 
 Visit http://localhost:3000
 
+**Using the Frontend:**
+
+- **Search Mode**: Enter stock symbols (e.g., AAPL, TSLA) or crypto symbols (e.g., BTCUSDT) to get instant quotes
+  - Toggle "Live Mode" for 5-second auto-refresh
+  - View price position within day's trading range
+  - History persists across page refreshes
+- **AI Agent Mode**: Click the "AI Agent" tab to chat with Gemini
+  - Ask questions like "What's the price of Apple stock?"
+  - Get conversational responses with real-time market data
+  - AI automatically calls MCP tools to fetch latest prices
+
+All prices are displayed in Indian Rupees (₹) with automatic conversion.
+
 ### 4. Verify Backend
 
 ```bash
@@ -128,6 +147,18 @@ npm start
 ```
 
 ### Run the Gemini Agent
+
+You can interact with Gemini in two ways:
+
+**1. Web Interface (Recommended)**
+
+```bash
+# Start frontend (if not already running)
+cd frontend && npm start
+# Click "AI Agent" tab in the browser
+```
+
+**2. CLI Agent**
 
 ```bash
 python examples/gemini_agent.py
