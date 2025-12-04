@@ -176,7 +176,7 @@ def chat_with_gemini(user_message: str, chat_history: Optional[list] = None) -> 
     """
     # Initialize model with tools
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",  # Free tier, latest model
+        model_name="gemini-2.5-flash",  # Free tier, latest model
         tools=tools,
         system_instruction="""You are a helpful financial assistant with access to real-time market data.
         
