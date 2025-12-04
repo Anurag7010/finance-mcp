@@ -111,7 +111,6 @@ const ChatInterface: React.FC = () => {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">AI Assistant</h2>
-            <p className="text-sm text-slate-400">Powered by Google Gemini</p>
           </div>
         </div>
       </div>
