@@ -1,6 +1,6 @@
 """
-Finance MCP Server
-Main FastAPI application
+Finance MCP Server - FastAPI Application
+
 """
 import json
 from pathlib import Path
@@ -88,7 +88,7 @@ async def lifespan(app: FastAPI):
     redis_client.close()
 
 
-# Create FastAPI app
+#  FastAPI app
 settings = get_settings()
 app = FastAPI(
     title=settings.mcp_server_name,
@@ -108,7 +108,7 @@ app.add_middleware(
 )
 
 
-# ==================== CORS PREFLIGHT HANDLER ====================
+# CORS PREFLIGHT HANDLER
 # Explicit handler for CORS preflight requests
 @app.options("/{path:path}")
 async def options_handler(path: str):
@@ -124,7 +124,7 @@ async def options_handler(path: str):
     )
 
 
-# ==================== MCP ENDPOINTS ====================
+# MCP ENDPOINTS
 
 @app.get("/.well-known/mcp")
 async def mcp_metadata():
@@ -294,7 +294,7 @@ async def unsubscribe(request: UnsubscribeRequest):
         )
 
 
-# ==================== AI CHAT ENDPOINT ====================
+# AI CHAT ENDPOINT
 
 class ChatRequest(BaseModel):
     message: str
@@ -339,7 +339,7 @@ async def chat(request: ChatRequest):
         logger.error(f"Chat endpoint error: {e}")
         error_msg = str(e)
         
-        # Parse common Gemini errors for user-friendly messages
+        #  common Gemini errors
         if "429" in error_msg or "quota" in error_msg.lower():
             error_msg = "The Gemini API quota has been exceeded. Please try again in a few moments or check your API billing settings."
         elif "401" in error_msg or "authentication" in error_msg.lower():
@@ -357,7 +357,7 @@ async def chat(request: ChatRequest):
         )
 
 
-# ==================== UTILITY ENDPOINTS ====================
+#  UTILITY ENDPOINTS 
 
 @app.get("/health")
 async def health_check():
@@ -379,7 +379,7 @@ async def list_subscriptions():
     }
 
 
-# ==================== ERROR HANDLERS ====================
+#  ERROR HANDLERS 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

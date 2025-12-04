@@ -69,7 +69,6 @@ class GeminiChatAgent:
                     query_text=f"Get quote for {symbol}"
                 )
                 
-                # Convert result to dict if it's a Pydantic model
                 if hasattr(result, 'model_dump'):
                     result = result.model_dump()
                 
@@ -121,7 +120,7 @@ class GeminiChatAgent:
             AI response text
         """
         try:
-            # Initialize model with tools
+            # Initialize model
             model = genai.GenerativeModel(
                 model_name="gemini-2.5-flash",
                 tools=self.tools,
