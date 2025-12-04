@@ -1,55 +1,31 @@
 # Finance MCP
 
-Finance MCP is a modular, production-grade platform for real-time financial data retrieval, caching, and AI agent integration. It features a FastAPI backend with dual-mode React frontend supporting both direct search and conversational AI (Gemini LLM) modes.
+Finance MCP is a modular, production-grade platform for real-time financial data retrieval, caching, and AI agent integration. It features a FastAPI backend and a premium dual-mode React frontend that supports both direct market search and conversational AI (Gemini LLM) interactions.
 
 ## Features
 
-- **Dual-Mode Interface**: Switch between Search mode and AI Agent mode seamlessly
-- **Search Mode**: Direct stock/crypto quote lookup with live auto-refresh and price history
-- **AI Agent Mode**: Natural language chat interface powered by Google Gemini for conversational market queries
-- Real-time and historical price data for stocks and crypto (Alpha Vantage, Finnhub, Binance)
-- **Indian Market Support**: Display prices in INR (₹) with automatic USD conversion (1$ = ₹89.94)
-- Redis hot cache and Qdrant semantic cache for low-latency and intelligent response
-- Neo4j graph lineage for data provenance
-- REST API and WebSocket support
-- Modern React + TypeScript + Tailwind frontend with premium Apple-level design
-- Live Mode with 5-second auto-refresh for real-time tracking
-- Day Range Visualizer showing price position within trading range
-- LocalStorage persistence for quote history
+- **Dual-Mode Interface**: Seamlessly switch between Search and AI Agent modes.
+- **Real-Time Data**: Live stock and crypto quotes via Alpha Vantage, Finnhub, and Binance.
+- **AI Agent Mode**: Natural language chat interface powered by Google Gemini with function calling capabilities.
+- **Search Mode**: Direct quote lookup with live auto-refresh (5s interval) and day range visualization.
+- **Indian Market Support**: Automatic currency conversion to INR (₹) for all prices (1$ = ₹89.94).
+- **Advanced Caching**: Redis hot cache and Qdrant semantic cache for low-latency responses.
+- **Data Lineage**: Neo4j integration for tracking data provenance.
+- **Premium UI**: Modern, Apple-inspired design with smooth transitions and professional aesthetics.
 
 ## Architecture
 
 ```
 User (Web/Agent/LLM)
    │
-   ├──> React Frontend (search & chat modes)
+   ├──> React Frontend (Search & Chat Modes)
    │
    └──> MCP Server (FastAPI)
-       ├── Redis (hot cache)
-       ├── Qdrant (semantic cache)
-       ├── Neo4j (graph lineage)
+       ├── Redis (Hot Cache)
+       ├── Qdrant (Semantic Cache)
+       ├── Neo4j (Graph Lineage)
        └── Connectors: Alpha Vantage, Finnhub, Binance
 ```
-
-## Project Structure
-
-```
-finance-mcp/
-├── mcp_server/         # FastAPI backend
-├── connectors/         # Data source connectors
-├── cache/              # Redis & Qdrant clients
-├── graph/              # Neo4j integration
-├── agents/             # Agent logic
-├── examples/           # Demo agents (Gemini, etc.)
-├── frontend/           # React + TypeScript UI
-├── infra/              # Docker, env, deployment
-├── tests/              # Test suite
-├── openapi.yaml        # API spec
-├── requirements.txt    # Python dependencies
-└── LICENSE
-```
-
-docker-compose up -d
 
 ## Getting Started
 
@@ -58,157 +34,91 @@ docker-compose up -d
 - Docker & Docker Compose
 - Python 3.11+
 - Node.js 18+ (for frontend)
-- Free API keys: [Alpha Vantage](https://www.alphavantage.co/support/#api-key), [Finnhub](https://finnhub.io/register)
+- API Keys:
+  - [Alpha Vantage](https://www.alphavantage.co/support/#api-key) (Stocks)
+  - [Finnhub](https://finnhub.io/register) (Stocks)
+  - [Google AI Studio](https://aistudio.google.com/) (Gemini API for Agent Mode)
 
-### 1. Clone and Configure
+### Installation
 
-```bash
-git clone https://github.com/Anurag7010/finance-mcp.git
-cd finance-mcp
-cp infra/env.sample .env
-# Edit .env and add API keys for Finnhub, AlphaVantage and Gemini
-```
+1.  **Clone and Configure**
 
-### 2. Start All Services (Docker)
+    ```bash
+    git clone https://github.com/Anurag7010/finance-mcp.git
+    cd finance-mcp
+    cp infra/env.sample .env
+    ```
 
-```bash
-cd infra
-docker-compose up -d
-```
+    Edit `.env` and add your API keys:
 
-This launches Redis, Qdrant, Neo4j, and the MCP server.
+    ```env
+    ALPHA_VANTAGE_API_KEY=your_key
+    FINNHUB_API_KEY=your_key
+    GEMINI_API_KEY=your_key
+    MCP_API_KEY=your_secure_backend_key
+    ```
 
-### 3. Start the Frontend
+2.  **Start Backend Services (Docker)**
 
-```bash
-cd ../frontend
-npm install
-npm start
-```
+    ```bash
+    cd infra
+    docker-compose up -d --build
+    ```
 
-Visit http://localhost:3000
+    This launches Redis, Qdrant, Neo4j, and the MCP Server (FastAPI).
 
-**Using the Frontend:**
+3.  **Start Frontend**
 
-- **Search Mode**: Enter stock symbols (e.g., AAPL, TSLA) or crypto symbols (e.g., BTCUSDT) to get instant quotes
-  - Toggle "Live Mode" for 5-second auto-refresh
-  - View price position within day's trading range
-  - History persists across page refreshes
-- **AI Agent Mode**: Click the "AI Agent" tab to chat with Gemini
-  - Ask questions like "What's the price of Apple stock?"
-  - Get conversational responses with real-time market data
-  - AI automatically calls MCP tools to fetch latest prices
+    ```bash
+    cd ../frontend
+    npm install
+    npm start
+    ```
 
-All prices are displayed in Indian Rupees (₹) with automatic conversion.
+    Visit http://localhost:3000
 
-### 4. Verify Backend
+## Usage Guide
 
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/.well-known/mcp
-curl http://localhost:8000/capabilities
-```
+### Search Mode
 
-### 5. Test API Endpoints
+- **Instant Quotes**: Enter symbols like `AAPL`, `TSLA`, or `BTCUSDT`.
+- **Live Mode**: Toggle to enable 5-second auto-refresh for real-time tracking.
+- **Visuals**: View price position within the day's high/low range.
+- **History**: Recent queries are saved locally in your browser.
 
-```bash
-# Get latest stock quote
-curl -X POST http://localhost:8000/invoke \
-  -H "Content-Type: application/json" \
-  -d '{"tool_name": "quote.latest", "arguments": {"symbol": "AAPL"}}'
+### AI Agent Mode
 
-# Subscribe to real-time crypto stream
-curl -X POST http://localhost:8000/subscribe \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "BTCUSDT", "channel": "trades"}'
-```
+- **Conversational**: Ask questions like "What is the price of Apple?" or "Compare Bitcoin and Ethereum".
+- **Smart Retrieval**: The agent intelligently calls backend tools to fetch real-time data only when needed.
+- **Context Aware**: Maintains conversation history for follow-up questions.
 
-docker run -d --name redis -p 6379:6379 redis:7-alpine
-docker run -d --name qdrant -p 6333:6333 qdrant/qdrant:latest
-docker run -d --name neo4j -p 7474:7474 -p 7687:7687 \
+### CLI Agent
 
-## Local Development (No Docker)
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-# Start Redis, Qdrant, Neo4j manually (see infra/docker-compose.yml for images/ports)
-uvicorn mcp_server.server:app --reload --port 8000
-```
-
-### Usage
-
-```bash
-cd frontend
-npm install
-npm start
-# Open http://localhost:3000
-```
-
-### Run the Gemini Agent
-
-You can interact with Gemini in two ways:
-
-**1. Web Interface (Recommended)**
-
-```bash
-# Start frontend (if not already running)
-cd frontend && npm start
-# Click "AI Agent" tab in the browser
-```
-
-**2. CLI Agent**
+You can also run the agent directly in the terminal:
 
 ```bash
 python examples/gemini_agent.py
-# Or: python examples/gemini_agent.py --demo
 ```
 
-Type questions like "What is the price of Bitcoin?" and the agent will call MCP tools automatically.
+## Security
 
-## Data Providers
+- **API Key Authentication**: All sensitive endpoints (`/invoke`, `/chat`, `/subscribe`) are protected by an `X-API-Key` header.
+- **Environment Variables**: API keys are managed via `.env` and never exposed to the client-side code (except the backend access key).
+- **CORS**: Configured to allow secure communication between the React frontend and FastAPI backend.
 
-- **Alpha Vantage**: Stocks, REST, 5 calls/min (free tier)
-- **Finnhub**: Stocks, REST, 60 calls/min (free tier)
-- **Binance**: Crypto, WebSocket, unlimited
+## Project Structure
 
-## Testing
-
-```bash
-pytest tests/ -v
 ```
-
-## Environment Variables
-
-See `infra/env.sample` for all options. Key variables:
-
-| Variable              | Description           |
-| --------------------- | --------------------- |
-| REDIS_HOST            | Redis hostname        |
-| QDRANT_HOST           | Qdrant hostname       |
-| NEO4J_URI             | Neo4j connection URI  |
-| ALPHA_VANTAGE_API_KEY | Alpha Vantage API key |
-| FINNHUB_API_KEY       | Finnhub API key       |
-| GEMINI_API_KEY        | Google Gemini API key |
-
-## API Documentation
-
-- OpenAPI: `openapi.yaml`
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-docker ps | grep redis
-docker logs finance-mcp-neo4j
-
-## Troubleshooting
-
-- Ensure all containers are running: `docker-compose ps`
-- Check `.env` for correct API keys
-- Redis: `redis-cli ping` should return PONG
-- Qdrant: `curl http://localhost:6333/collections`
-- Neo4j: http://localhost:7474 (user: neo4j, pass: password123)
-- For rate limits, use Binance for crypto (unlimited)
+finance-mcp/
+├── mcp_server/         # FastAPI backend & MCP implementation
+├── connectors/         # Data source integrations (Alpha Vantage, Binance, etc.)
+├── cache/              # Redis & Qdrant client wrappers
+├── graph/              # Neo4j lineage tracking
+├── agents/             # Gemini agent logic
+├── frontend/           # React + TypeScript application
+├── infra/              # Docker composition & environment config
+└── tests/              # Pytest suite
+```
 
 ## License
 
